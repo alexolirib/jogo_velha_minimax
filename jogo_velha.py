@@ -44,7 +44,6 @@ class JogoVelha:
             self.mensagem_erro('Jogada incorreta, escolha uma posição válida entre 1 até 9')
             return
         coordenada_jogada = self.obter_coordenada_jogada(posicao)
-        print(f'coordenada(x,y) - > {coordenada_jogada}')
 
         jogada_correta = self.verificar_jogada(coordenada_jogada[0], coordenada_jogada[1])
 

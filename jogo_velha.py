@@ -1,5 +1,7 @@
 import time
-from random import randint
+from random import randint, random
+from copy import deepcopy
+
 
 
 class Jogador:
@@ -16,7 +18,7 @@ class Jogador:
         self.simbolo = self.simbolo_aceito[simbolo]
 
 class JogoVelha:
-    def __init__(self, jogador1, jogador2):
+    def __init__(self, jogador1, jogador2): 
         self.tabuleiro = [' ', ' ', ' '],\
                          [' ', ' ', ' '],\
                          [' ', ' ', ' ']
@@ -25,7 +27,8 @@ class JogoVelha:
         self.vencedor = None
         self.jogador1 = jogador1
         self.jogador2 = jogador2
-        self.display_tabuleiro()
+        self.jogada_correta = False
+        # self.display_tabuleiro()
 
     def display_tabuleiro(self):
         count = 0
@@ -37,9 +40,11 @@ class JogoVelha:
 
     def mensagem_erro(self, mensagem):
         self.display_tabuleiro()
+        self.jogada_correta = False
         print(f"\n{mensagem}\n")
 
     def jogada(self, posicao, jogador):
+        self.jogada_correta = False
         if posicao > 9 or posicao <1:
             self.mensagem_erro('Jogada incorreta, escolha uma posição válida entre 1 até 9')
             return
@@ -56,51 +61,92 @@ class JogoVelha:
         self.jogada_feita.append(posicao)
         self.display_tabuleiro()
 
-        if self.verificar_vencedor(jogador):
-            self.fim_jogo = True
-            self.vencedor = jogador
-
-        if len(self.jogada_feita) == 9:
-            self.fim_jogo = True
+        self.jogada_correta = True
 
     def jogada_maquina(self, maquina):
-        while True:
-            posicao = randint(1, 9)
-            if posicao not in self.jogada_feita:
-                break
-        coordenada_jogada = self.obter_coordenada_jogada(posicao)
+        if maquina.simbolo == 'X':
+            hum_simbolo = 'O'
+        else:
+            hum_simbolo = 'X'
 
-        self.tabuleiro[coordenada_jogada[0]][coordenada_jogada[1]] = maquina.simbolo
-        self.jogada_feita.append(posicao)
-        self.display_tabuleiro()
+        #verificar se é possivel vencer na proxima jogada
+        for i in range(1,10):
+            tabuleiro_y = deepcopy(self.tabuleiro)
+            if i not in self.jogada_feita:
+                cood_jod = self.obter_coordenada_jogada(i)
+                tabuleiro_y[cood_jod[0]][cood_jod[1]] = maquina.simbolo
+                if self.verificar_vencedor(simbolo_jogador=maquina.simbolo, tabuleiro=tabuleiro_y):
+                    self.tabuleiro[cood_jod[0]][cood_jod[1]] = maquina.simbolo
+                    self.jogada_feita.append(i)
+                    self.display_tabuleiro()
+                    return
 
-        if self.verificar_vencedor(maquina):
-            self.fim_jogo = True
-            self.vencedor = maquina
+        #verificar se o jogador pode vencer na próxima rodada
+        for i in range(1,10):
+            tabuleiro_y = deepcopy(self.tabuleiro)
+            if i not in self.jogada_feita:
+                cood_jod = self.obter_coordenada_jogada(i)
+                tabuleiro_y[cood_jod[0]][cood_jod[1]] = hum_simbolo
+                if self.verificar_vencedor(simbolo_jogador=hum_simbolo, tabuleiro=tabuleiro_y):
+                    self.tabuleiro[cood_jod[0]][cood_jod[1]] = maquina.simbolo
+                    self.jogada_feita.append(i)
+                    self.display_tabuleiro()
+                    return
 
-        if len(self.jogada_feita) == 9:
-            self.fim_jogo = True
+        jogada = self.mov_aleatorio([1, 3, 7, 9])
+        if jogada:
+            cood_jod = self.obter_coordenada_jogada(jogada)
+            self.tabuleiro[cood_jod[0]][cood_jod[1]] = maquina.simbolo
+            self.jogada_feita.append(jogada)
+            self.display_tabuleiro()
+            return
 
-    def verificar_vencedor(self, jogador):
-        simbolo_jogador = jogador.simbolo
+        if 5 not in self.jogada_feita:
+            cood_jod = self.obter_coordenada_jogada(5)
+            self.tabuleiro[cood_jod[0]][cood_jod[1]] = maquina.simbolo
+            self.jogada_feita.append(5)
+            self.display_tabuleiro()
+            return
+
+        jogada = self.mov_aleatorio([2, 4, 6, 8])
+        if jogada:
+            cood_jod = self.obter_coordenada_jogada(jogada)
+            self.tabuleiro[cood_jod[0]][cood_jod[1]] = maquina.simbolo
+            self.jogada_feita.append(jogada)
+            self.display_tabuleiro()
+            return
+
+
+
+    def mov_aleatorio(self, list_mov):
+        mov_possivel = []
+        for i in list_mov:
+            if i not in self.jogada_feita:
+                mov_possivel.append(i)
+        if mov_possivel:
+            import random
+            return random.choice(mov_possivel)
+        return None
+
+    def verificar_vencedor(self, simbolo_jogador, tabuleiro):
         tabuleiro_y = [' ', ' ', ' '],\
                       [' ', ' ', ' '],\
                       [' ', ' ', ' ']
         tabuleiro_diagonal = [' ', ' ', ' '], [' ', ' ', ' ']
-        for index in range(0,len(self.tabuleiro)):
-            tabuleiro_y[0][index] = self.tabuleiro[index][0]
-            tabuleiro_y[1][index] = self.tabuleiro[index][1]
-            tabuleiro_y[2][index] = self.tabuleiro[index][2]
+        for index in range(0,len(tabuleiro)):
+            tabuleiro_y[0][index] = tabuleiro[index][0]
+            tabuleiro_y[1][index] = tabuleiro[index][1]
+            tabuleiro_y[2][index] = tabuleiro[index][2]
             if index == 0:
-                tabuleiro_diagonal[0][0] = self.tabuleiro[index][0]
-                tabuleiro_diagonal[1][0] = self.tabuleiro[index][2]
+                tabuleiro_diagonal[0][0] = tabuleiro[index][0]
+                tabuleiro_diagonal[1][0] = tabuleiro[index][2]
             if index == 1:
-                tabuleiro_diagonal[0][1] = self.tabuleiro[index][1]
-                tabuleiro_diagonal[1][1] = self.tabuleiro[index][1]
+                tabuleiro_diagonal[0][1] = tabuleiro[index][1]
+                tabuleiro_diagonal[1][1] = tabuleiro[index][1]
             if index == 2:
-                tabuleiro_diagonal[0][2] = self.tabuleiro[index][2]
-                tabuleiro_diagonal[1][2] = self.tabuleiro[index][0]
-            if self.__verificar_simbolos_apartir_list(simbolo=simbolo_jogador, list=self.tabuleiro[index]) == 3:
+                tabuleiro_diagonal[0][2] = tabuleiro[index][2]
+                tabuleiro_diagonal[1][2] = tabuleiro[index][0]
+            if self.__verificar_simbolos_apartir_list(simbolo=simbolo_jogador, list=tabuleiro[index]) == 3:
                 return True
         for tab in tabuleiro_y:
             if self.__verificar_simbolos_apartir_list(simbolo=simbolo_jogador, list=tab) == 3:
@@ -141,6 +187,14 @@ class Jogo:
         self.jogador1 = jogador1
 
 
+
+def jogaPrimeiro():
+
+    if randint(0, 1) == 0:
+        return 'pc'
+    else:
+        return 'hum'
+
 def start_game():
     jogador_hum = Jogador(1)
     jogador_pc = Jogador(2)
@@ -156,24 +210,35 @@ def start_game():
             break
     jv = JogoVelha(jogador_hum, jogador_pc)
 
-    while True:
-        try:
-            posicao = int(input("Escolha posição da jogada que seja entre 1 - 9: \n"))
-        except:
-            continue
-        jv.jogada(posicao, jogador_hum)
+    turno = jogaPrimeiro()
 
-        if jv.fim_jogo:
-            if jv.vencedor is not None:
-                print(f"O {jv.vencedor.perfil} ganhou!!")
-            else:
-                print("Jogo Emparado!!!")
-            break
+    while True:
+        if turno == 'hum':
+
+            jogador = jogador_hum
+            while not jv.jogada_correta:
+                try:
+                    posicao = int(input("Escolha posição da jogada que seja entre 1 - 9: \n"))
+                except:
+                    continue
+                jv.jogada(posicao, jogador)
+
+        else:
+            jogador = jogador_pc
+            jv.jogada_maquina(jogador)
+
+        if jv.verificar_vencedor(simbolo_jogador=jogador.simbolo,tabuleiro=jv.tabuleiro):
+            jv.fim_jogo = True
+            jv.vencedor = jogador
+
+        if len(jv.jogada_feita) == 9:
+            jv.fim_jogo = True
+        jv.jogada_correta = False
         time_sleep = 0.35
         time.sleep(time_sleep)
         print('\n----------------------------------\n ')
         time.sleep(time_sleep)
-        jv.jogada_maquina(jogador_pc)
+        # jv.jogada_maquina(jogador_pc)
 
         if jv.fim_jogo:
             if jv.vencedor is not None:
@@ -181,6 +246,11 @@ def start_game():
             else:
                 print("Jogo Emparado!!!")
             break
+
+        if turno == 'hum':
+            turno = 'pc'
+        else:
+            turno = 'hum'
 
     print('fim de jogo')
 
